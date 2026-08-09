@@ -62,6 +62,12 @@ jobs:
           xcodebuild -project MacMirror.xcodeproj -scheme MacMirror -configuration Release \
             -derivedDataPath build CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO build
 
+      - name: Ad-hoc sign the app
+        working-directory: mac-mirror-receiver
+        run: |
+          codesign --force --deep --entitlements MacMirror.entitlements --sign - \
+            build/Build/Products/Release/MacMirror.app
+
       - name: Package as .dmg
         working-directory: mac-mirror-receiver
         run: |
