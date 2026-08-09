@@ -1,0 +1,22 @@
+name: MacMirror
+options:
+  bundleIdPrefix: com.example
+targets:
+  MacMirror:
+    type: application
+    platform: macOS
+    deploymentTarget: "13.0"
+    sources:
+      - Sources
+    entitlements:
+      path: MacMirror.entitlements
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.example.macmirror
+        MARKETING_VERSION: "1.0"
+        CURRENT_PROJECT_VERSION: "1"
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_NSHumanReadableCopyright: ""
+        INFOPLIST_KEY_NSLocalNetworkUsageDescription: "Used to mirror your Android phone's screen and transfer files over Wi-Fi."
+        INFOPLIST_KEY_NSPrincipalClass: NSApplication
+        SWIFT_VERSION: "5.0"

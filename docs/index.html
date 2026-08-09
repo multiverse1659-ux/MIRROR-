@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Screen Bridge — mirror and send files between your phone and Mac</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  :root {
+    --bg: #10141a;
+    --surface: #171d25;
+    --surface-2: #1e2530;
+    --border: #2a323d;
+    --text: #edf0f2;
+    --text-dim: #93a0ac;
+    --text-faint: #5c6773;
+    --android: #4fbb79;
+    --mac: #8fb4d9;
+    --warn: #e0a458;
+    --font-display: 'Space Grotesk', sans-serif;
+    --font-body: 'Inter', sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    background-image:
+      radial-gradient(circle at 15% 0%, rgba(143, 180, 217, 0.06), transparent 40%),
+      radial-gradient(circle at 85% 15%, rgba(79, 187, 121, 0.06), transparent 40%);
+    color: var(--text);
+    font-family: var(--font-body);
+    line-height: 1.6;
+  }
+
+  .wrap {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 72px 24px 100px;
+  }
+
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--text-faint);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  .eyebrow::before {
+    content: '';
+    width: 20px;
+    height: 1px;
+    background: var(--text-faint);
+  }
+
+  h1 {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: clamp(32px, 5vw, 46px);
+    line-height: 1.12;
+    margin: 0 0 18px;
+    letter-spacing: -0.01em;
+  }
+
+  .lede {
+    font-size: 17px;
+    color: var(--text-dim);
+    max-width: 52ch;
+    margin: 0 0 48px;
+  }
+
+  .bridge-diagram {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    margin: 0 0 56px;
+    padding: 28px 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+  }
+
+  .node {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    padding: 10px 16px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    white-space: nowrap;
+  }
+
+  .node.phone { color: var(--android); border-color: rgba(79,187,121,0.35); background: rgba(79,187,121,0.06); }
+  .node.mac { color: var(--mac); border-color: rgba(143,180,217,0.35); background: rgba(143,180,217,0.06); }
+
+  .link-line {
+    flex: 1;
+    height: 1px;
+    background: repeating-linear-gradient(90deg, var(--text-faint) 0 6px, transparent 6px 12px);
+    margin: 0 14px;
+    position: relative;
+    min-width: 40px;
+  }
+
+  .cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+
+  @media (max-width: 600px) {
+    .cards { grid-template-columns: 1fr; }
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 28px;
+    display: flex;
+    flex-direction: column;
+    transition: border-color 0.2s ease;
+  }
+
+  .card.recommended {
+    border-color: var(--platform-color, var(--border));
+  }
+
+  .platform-label {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-faint);
+    margin-bottom: 6px;
+  }
+
+  .card h2 {
+    font-family: var(--font-display);
+    font-size: 22px;
+    font-weight: 500;
+    margin: 0 0 8px;
+  }
+
+  .card .desc {
+    font-size: 14px;
+    color: var(--text-dim);
+    margin: 0 0 22px;
+    flex-grow: 1;
+  }
+
+  .btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    text-decoration: none;
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: 14px;
+    padding: 13px 20px;
+    border-radius: 9px;
+    background: var(--surface-2);
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+
+  .btn.android { background: rgba(79,187,121,0.12); color: var(--android); border-color: rgba(79,187,121,0.3); }
+  .btn.mac { background: rgba(143,180,217,0.12); color: var(--mac); border-color: rgba(143,180,217,0.3); }
+
+  .btn:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
+
+  .meta {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--text-faint);
+    margin-top: 12px;
+  }
+
+  .badge {
+    display: inline-block;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--platform-color, var(--text-dim));
+    margin-top: 14px;
+  }
+
+  .notice {
+    display: flex;
+    gap: 12px;
+    background: rgba(224, 164, 88, 0.08);
+    border: 1px solid rgba(224, 164, 88, 0.25);
+    border-radius: 12px;
+    padding: 18px 20px;
+    margin-top: 8px;
+    font-size: 14px;
+    color: var(--text-dim);
+  }
+
+  .notice strong { color: var(--warn); font-weight: 600; }
+
+  .setup {
+    margin-top: 64px;
+    padding-top: 40px;
+    border-top: 1px solid var(--border);
+  }
+
+  .setup h3 {
+    font-family: var(--font-display);
+    font-size: 18px;
+    font-weight: 500;
+    margin: 0 0 18px;
+  }
+
+  .setup ol {
+    padding-left: 20px;
+    color: var(--text-dim);
+    font-size: 14px;
+  }
+
+  .setup li { margin-bottom: 10px; }
+
+  code {
+    font-family: var(--font-mono);
+    background: var(--surface-2);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 13px;
+    color: var(--text);
+  }
+
+  footer {
+    margin-top: 56px;
+    font-size: 13px;
+    color: var(--text-faint);
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="eyebrow">Local Wi-Fi only — nothing leaves your network</div>
+  <h1>Your phone's screen, on your Mac.</h1>
+  <p class="lede">A small bridge between your Android phone and your Mac — live screen mirroring, and drag-and-drop file transfer in both directions, over your own Wi-Fi.</p>
+
+  <div class="bridge-diagram">
+    <span class="node phone">Android</span>
+    <span class="link-line" aria-hidden="true"></span>
+    <span class="node mac">Mac</span>
+  </div>
+
+  <div class="cards">
+    <div class="card" id="card-android" style="--platform-color:#4fbb79">
+      <div class="platform-label">Android</div>
+      <h2>Mirror Sender</h2>
+      <p class="desc">Streams your phone's screen to your Mac and sends files across, either direction.</p>
+      <a class="btn android" href="#" id="dl-android">Download .apk</a>
+      <div class="meta">Requires enabling "install from unknown sources" — this is a self-built app, not from the Play Store.</div>
+      <span class="badge" id="badge-android"></span>
+    </div>
+
+    <div class="card" id="card-mac" style="--platform-color:#8fb4d9">
+      <div class="platform-label">macOS</div>
+      <h2>Mac Mirror</h2>
+      <p class="desc">Receives the stream and displays it, and pushes/receives files with the phone.</p>
+      <a class="btn mac" href="#" id="dl-mac">Download .dmg</a>
+      <div class="meta">Unsigned build — right-click the app and choose Open the first time to bypass Gatekeeper.</div>
+      <span class="badge" id="badge-mac"></span>
+    </div>
+  </div>
+
+  <div class="notice">
+    <div>
+      <strong>One-time setup:</strong> this page pulls files from your GitHub repo's Releases. See the setup note below — after that, these links work permanently and rebuild themselves on every code change.
+    </div>
+  </div>
+
+  <div class="setup">
+    <h3>One-time setup (about 5 minutes, no Xcode/Android Studio needed)</h3>
+    <ol>
+      <li>Create a free GitHub account if you don't have one, then create a new repository.</li>
+      <li>Upload everything from this project (drag the folders into GitHub's web uploader, or use <code>git push</code>) — including the <code>.github/workflows/build.yml</code> file, which does the building for you.</li>
+      <li>On your repo's page, go to <strong>Releases → Draft a new release</strong>, type a tag like <code>v1.0</code>, and click <strong>Publish release</strong>. This triggers the automated build — check the <strong>Actions</strong> tab to watch it run (~5–10 minutes, mostly the Mac build).</li>
+      <li>Once it finishes, refresh your release page — <code>MirrorSender.apk</code> and <code>MacMirror.dmg</code> will be attached to it automatically.</li>
+      <li>Open this page's HTML file, find the two lines near the top of the <code>&lt;script&gt;</code> that say <code>GITHUB_OWNER</code> and <code>GITHUB_REPO</code>, and fill in your GitHub username and repo name. That's the only edit needed — the download buttons will then always point at your latest release.</li>
+    </ol>
+  </div>
+
+  <footer>Both devices need to be on the same Wi-Fi network to connect.</footer>
+</div>
+
+<script>
+  // ↓↓↓ Fill these in once, after creating your GitHub repo — nothing else
+  // in this file needs to change.
+  const GITHUB_OWNER = "your-github-username";
+  const GITHUB_REPO = "your-repo-name";
+
+  document.getElementById('dl-android').href =
+    `https://github.com/${GITHUB_OWNER}/${GITHUB_REPO}/releases/latest/download/MirrorSender.apk`;
+  document.getElementById('dl-mac').href =
+    `https://github.com/${GITHUB_OWNER}/${GITHUB_REPO}/releases/latest/download/MacMirror.dmg`;
+
+  const ua = navigator.userAgent;
+  const isAndroid = /Android/i.test(ua);
+  const isMac = /Macintosh|Mac OS X/i.test(ua) && !isAndroid;
+
+  if (isAndroid) {
+    document.getElementById('card-android').classList.add('recommended');
+    document.getElementById('badge-android').textContent = '→ recommended for this device';
+  } else if (isMac) {
+    document.getElementById('card-mac').classList.add('recommended');
+    document.getElementById('badge-mac').textContent = '→ recommended for this device';
+  }
+</script>
+</body>
+</html>
